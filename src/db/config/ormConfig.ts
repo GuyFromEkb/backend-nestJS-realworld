@@ -13,7 +13,7 @@ const ormConfig: DataSourceOptions = {
 const postgresDataSource = new DataSource({
   ...ormConfig,
   synchronize: false,
-  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+  entities: [__dirname + "/../../**/*.entity{.ts,.js}"],
   migrations: [__dirname + "/../migrations/**/*{.ts,.js}"],
 });
 
