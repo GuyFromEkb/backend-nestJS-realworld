@@ -19,8 +19,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "typeorm-ts-node-commonjs -d ./src/db/config/ormConfig.ts",
+    "typeorm:no-config": "typeorm-ts-node-commonjs",
     "db:drop": "npm run typeorm schema:drop",
-    "db:create": "npm run typeorm -- migration:generate src/db/migrations/%npm_config_name%",
+    "db:create": "npm run typeorm:no-config -- migration:create src/db/migrations/%npm_config_name%",
+    "db:generate": "npm run typeorm -- migration:generate src/db/migrations/%npm_config_name%",
     "db:migrate": "npm run typeorm migration:run"
   },
   "dependencies": {
