@@ -1,12 +1,13 @@
 import { Module } from "@nestjs/common";
 
 import { TagModule } from "~tag/tag.module";
+import { UserModule } from "~user/user.module";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 
 @Module({
-  imports: [TagModule],
+  imports: [TagModule, UserModule],
   controllers: [AppController],
   providers: [AppService],
 })
