@@ -1,13 +1,30 @@
-import path from "path";
+import { DataSource } from "typeorm";
 import { DataSourceOptions } from "typeorm/data-source/DataSourceOptions";
 
-export const ormConfig: DataSourceOptions = {
+const ormConfig: DataSourceOptions = {
   type: "postgres",
   host: "localhost",
   port: 5432,
   username: "mediumclone",
   password: "123",
   database: "mediumclone",
-  entities: [path.resolve(__dirname, "..", "**", "*.entity.{js,ts}")],
-  synchronize: true,
 };
+
+const postgresDataSource = new DataSource({
+  ...ormConfig,
+  synchronize: false,
+  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+  migrations: [__dirname + "/../migrations/**/*{.ts,.js}"],
+});
+
+postgresDataSource
+  .initialize()
+  .then(() => {
+    console.log("Data Source has been initialized!");
+  })
+  .catch((err) => {
+    console.error("Error during Data Source initialization", err);
+  });
+
+// default export for runner in package.json
+export default postgresDataSource;
