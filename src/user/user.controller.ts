@@ -9,14 +9,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post("/users")
-  async createUser(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<ICreateUserRes> {
-    const userEntity = await this.userService.createUser(createUserDto);
+  async createUser(@Body() createUserDto: CreateUserDto): Promise<ICreateUserRes> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithOutPassword } = await this.userService.createUser(createUserDto);
 
     return {
       user: {
-        ...userEntity,
+        ...userWithOutPassword,
         token: this.userService.createToken(createUserDto),
       },
     };

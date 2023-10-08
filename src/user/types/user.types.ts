@@ -1,7 +1,7 @@
 import { UserEntity } from "~user/user.entity";
 
-type UserType = UserEntity;
+type UserType = Omit<UserEntity, "hashPassword">;
 
 export interface ICreateUserRes {
-  user: UserType & { token: string };
+  user: Omit<UserType, "password"> & { token: string };
 }

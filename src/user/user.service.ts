@@ -11,11 +11,9 @@ import { CreateUserDto } from "./dto/createUser.dto";
 export class UserService {
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
     const newUser = new UserEntity();
+    const mergeUserData = Object.assign(newUser, createUserDto);
 
-    Object.assign(newUser, createUserDto);
-    console.log("newUser", newUser);
-
-    return db.manager.save(UserEntity, newUser);
+    return db.manager.save(UserEntity, mergeUserData);
   }
 
   createToken(createUserDto: CreateUserDto) {
