@@ -1,6 +1,7 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import jwt from "jsonwebtoken";
 
+import { AppHttpException } from "~common/errors";
 import { db } from "~db";
 import { JWT_ACCESS_SECRET } from "~env";
 import { UserEntity } from "~user/user.entity";
@@ -15,7 +16,7 @@ export class UserService {
     }));
 
     if (isUserExist) {
-      throw new HttpException("Email or username are taken", HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new AppHttpException("Email or username are taken", HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     const newUser = new UserEntity();
