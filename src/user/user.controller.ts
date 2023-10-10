@@ -10,7 +10,7 @@ export class UserController {
 
   @Post("/users")
   @UsePipes(new ValidationPipe())
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<ICreateUserRes> {
+  async createUser(@Body("user") createUserDto: CreateUserDto): Promise<ICreateUserRes> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithOutPassword } = await this.userService.createUser(createUserDto);
 
