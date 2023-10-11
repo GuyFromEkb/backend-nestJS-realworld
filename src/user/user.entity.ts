@@ -7,7 +7,7 @@ import { USER_PASSWORD_SALT } from "../env";
 @Entity({ name: "users" })
 export class UserEntity {
   @PrimaryGeneratedColumn("uuid")
-  id: number;
+  id: string;
 
   @Column()
   username: string;

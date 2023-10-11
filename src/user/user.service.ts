@@ -1,15 +1,19 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
-import jwt from "jsonwebtoken";
+import { HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { compare } from "bcrypt";
 
 import { AppHttpException } from "~common/errors";
+import { TokenService } from "~common/service";
 import { db } from "~db";
-import { JWT_ACCESS_SECRET } from "~env";
-import { UserEntity } from "~user/user.entity";
 
 import { CreateUserDto } from "./dto/createUser.dto";
+import { LoginUserDto } from "./dto/loginUser.dto";
+import { IUserRes } from "./types/user.types";
+import { UserEntity } from "./user.entity";
 
 @Injectable()
 export class UserService {
+  @Inject(TokenService)
+  private readonly tokenService: TokenService;
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
     const isUserExist = !!(await db.manager.findOne(UserEntity, {
       where: [{ username: createUserDto.username }, { email: createUserDto.email }],
@@ -25,7 +29,35 @@ export class UserService {
     return db.manager.save(UserEntity, mergeUserData);
   }
 
-  createToken(createUserDto: CreateUserDto) {
-    return jwt.sign(createUserDto, JWT_ACCESS_SECRET);
+  async loginUser(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const existUser = await db.manager.findOne(UserEntity, {
+      where: {
+        email: loginUserDto.email,
+      },
+      select: ["email", "password", "bio", "image", "username", "id"],
+    });
+
+    if (!existUser) {
+      throw new AppHttpException("Email or password has wrong value", HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    const isPasswordCorrect = await compare(loginUserDto.password, existUser.password);
+
+    if (!isPasswordCorrect) {
+      throw new AppHttpException("Email or password has wrong value", HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    return existUser;
+  }
+
+  buildUserResponse(userEntity: UserEntity): IUserRes {
+    delete userEntity.id;
+    delete userEntity.password;
+    return {
+      user: {
+        ...userEntity,
+        token: this.tokenService.createToken(userEntity),
+      },
+    };
   }
 }
