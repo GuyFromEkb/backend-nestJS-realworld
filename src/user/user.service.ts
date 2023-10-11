@@ -51,11 +51,12 @@ export class UserService {
   }
 
   buildUserResponse(userEntity: UserEntity): IUserRes {
-    delete userEntity.id;
-    delete userEntity.password;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, password, ...restUser } = userEntity;
+
     return {
       user: {
-        ...userEntity,
+        ...restUser,
         token: this.tokenService.createToken(userEntity),
       },
     };

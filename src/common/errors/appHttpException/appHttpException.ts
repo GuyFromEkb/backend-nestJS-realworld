@@ -5,7 +5,7 @@ export class AppHttpException extends HttpException {
     super(
       {
         errors: {
-          body: [...[].concat(errors)],
+          body: [...(Array.isArray(errors) ? errors : [errors])],
         },
       },
       statusCode,
