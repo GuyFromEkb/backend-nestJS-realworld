@@ -1,1 +1,1 @@
-export { IAppRequest } from "./request.types";
+export { IAppRequest } from "./request.type";
