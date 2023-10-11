@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, HttpStatus, Injectable } from "@nestjs/common";
 import { Observable } from "rxjs";
+import { AppHttpException } from "src/common/error";
 
-import { AppHttpException } from "~common/errors";
 import { IAppRequest } from "~common/type";
 
 @Injectable()

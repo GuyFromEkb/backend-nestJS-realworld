@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { compare } from "bcrypt";
+import { AppHttpException } from "src/common/error";
 
-import { AppHttpException } from "~common/errors";
 import { TokenService } from "~common/service";
 import { db } from "~db";
 import { IUserRes, TUser } from "~user/type/user.type";

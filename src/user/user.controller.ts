@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards, UsePipes } from "@nestjs/common";
+import { AppValidationPipe } from "src/common/error";
 
 import { User } from "~common/decorator/userDecorator/user.decorator";
-import { AppValidationPipe } from "~common/errors";
 import { AuthGuard } from "~common/guard";
 import { IUserRes, TUser } from "~user/type/user.type";
 

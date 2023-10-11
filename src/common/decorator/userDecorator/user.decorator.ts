@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext, HttpStatus } from "@nestjs/common";
+import { AppHttpException } from "src/common/error";
 
-import { AppHttpException } from "~common/errors";
 import { IAppRequest } from "~common/type";
 
 import { TUserField } from "./user.decorator.type";
