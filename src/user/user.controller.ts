@@ -1,6 +1,7 @@
-import { Body, Controller, Post, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, UsePipes } from "@nestjs/common";
 
 import { AppValidationPipe } from "~common/errors";
+import { IAppRequest } from "~common/type";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
@@ -25,5 +26,11 @@ export class UserController {
     const user = await this.userService.loginUser(loginUserDto);
 
     return this.userService.buildUserResponse(user);
+  }
+  @Get("/user")
+  async getCurrentUser(@Req() request: IAppRequest): Promise<IUserRes> {
+    const user = request.user;
+
+    return this.userService.buildUserResponse(user!);
   }
 }
