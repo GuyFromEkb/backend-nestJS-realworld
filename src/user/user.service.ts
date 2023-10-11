@@ -4,10 +4,10 @@ import { compare } from "bcrypt";
 import { AppHttpException } from "~common/errors";
 import { TokenService } from "~common/service";
 import { db } from "~db";
+import { IUserRes, TUser } from "~user/type/user.type";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
-import { IUserRes } from "./types/user.types";
 import { UserEntity } from "./user.entity";
 
 @Injectable()
@@ -50,13 +50,13 @@ export class UserService {
     return existUser;
   }
 
-  buildUserResponse(userEntity: UserEntity): IUserRes {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, password, ...restUser } = userEntity;
-
+  buildUserResponse(userEntity: UserEntity | TUser): IUserRes {
     return {
       user: {
-        ...restUser,
+        bio: userEntity.bio,
+        image: userEntity.image,
+        username: userEntity.username,
+        email: userEntity.email,
         token: this.tokenService.createToken(userEntity),
       },
     };
