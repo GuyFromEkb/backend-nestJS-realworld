@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 import { AppValidationPipe } from "src/common/error";
 
 import { User } from "~common/decorator/userDecorator/user.decorator";
 import { AuthGuard } from "~common/guard";
+import { UpdateUserDto } from "~user/dto/updateUser.dto";
 import { IUserRes, TUser } from "~user/type/user.type";
+import { ValidatePayloadExistsPipe } from "~user/validator/updateUser.validator";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
@@ -28,9 +30,18 @@ export class UserController {
 
     return this.userService.buildUserResponse(user);
   }
+
   @Get("/user")
   @UseGuards(AuthGuard)
   async getCurrentUser(@User() user: TUser): Promise<IUserRes> {
+    return this.userService.buildUserResponse(user);
+  }
+
+  @Put("/user")
+  @UseGuards(AuthGuard)
+  @UsePipes(new ValidatePayloadExistsPipe())
+  async updateUser(@Body("user") updateUserDto: UpdateUserDto, @User() user: TUser): Promise<IUserRes> {
+    console.log("updateUserDto", updateUserDto);
     return this.userService.buildUserResponse(user);
   }
 }

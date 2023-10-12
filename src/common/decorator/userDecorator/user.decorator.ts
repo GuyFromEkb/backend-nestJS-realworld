@@ -7,6 +7,7 @@ import { TUserField } from "./user.decorator.type";
 
 export const User = createParamDecorator((field: TUserField | undefined, ctx: ExecutionContext) => {
   const request: IAppRequest = ctx.switchToHttp().getRequest();
+
   if (!request.user) throw new AppHttpException("Unauthorized", HttpStatus.UNAUTHORIZED);
 
   if (field) return request.user[field];
