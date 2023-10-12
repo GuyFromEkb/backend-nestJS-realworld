@@ -14,7 +14,7 @@ import { AppService } from "./app.service";
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes({
+    consumer.apply(AuthMiddleware).exclude("tags", "users/(.*)").forRoutes({
       path: "*",
       method: RequestMethod.ALL,
     });
