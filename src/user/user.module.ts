@@ -8,5 +8,6 @@ import { UserService } from "./user.service";
 @Module({
   controllers: [UserController],
   providers: [UserService, TokenService],
+  exports: [TokenService],
 })
 export class UserModule {}

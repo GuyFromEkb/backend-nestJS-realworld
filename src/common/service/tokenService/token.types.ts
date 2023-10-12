@@ -3,3 +3,5 @@ export interface ITokenUserData {
   username: string;
   email: string;
 }
+
+export type TDecodeToken = { [key: string]: string };
