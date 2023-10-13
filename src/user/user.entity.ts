@@ -1,5 +1,7 @@
 import { hash } from "bcrypt";
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+
+import { ArticlesEntity } from "~article/articles.entity";
 
 //Todo при абсолютном пути не работает при работе с orm через package.json
 import { USER_PASSWORD_SALT } from "../env";
@@ -23,6 +25,9 @@ export class UserEntity {
 
   @Column({ default: "" })
   image: string;
+
+  @OneToMany(() => ArticlesEntity, (article) => article.author)
+  articles: ArticlesEntity[];
 
   @BeforeInsert()
   async hashPassword() {
