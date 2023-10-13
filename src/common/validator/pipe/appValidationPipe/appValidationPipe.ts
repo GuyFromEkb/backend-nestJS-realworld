@@ -8,6 +8,7 @@ export class AppValidationPipe extends ValidationPipe {
   constructor(options?: ValidationPipeOptions) {
     super({
       ...options,
+      whitelist: options?.whitelist ?? true,
       exceptionFactory: (errors) => {
         const messages = this.processErrors(errors);
         return new AppHttpException(messages, HttpStatus.BAD_REQUEST);
