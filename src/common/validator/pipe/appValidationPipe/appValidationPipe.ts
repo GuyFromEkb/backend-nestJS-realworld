@@ -1,12 +1,13 @@
-import { HttpStatus, Injectable, ValidationPipe } from "@nestjs/common";
+import { HttpStatus, Injectable, ValidationPipe, ValidationPipeOptions } from "@nestjs/common";
 import { ValidationError } from "class-validator";
 
 import { AppHttpException } from "~common/error";
 
 @Injectable()
 export class AppValidationPipe extends ValidationPipe {
-  constructor() {
+  constructor(options?: ValidationPipeOptions) {
     super({
+      ...options,
       exceptionFactory: (errors) => {
         const messages = this.processErrors(errors);
         return new AppHttpException(messages, HttpStatus.BAD_REQUEST);
