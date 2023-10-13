@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
-import { AppValidationPipe } from "src/common/error";
 
 import { User } from "~common/decorator/userDecorator/user.decorator";
 import { AuthGuard } from "~common/guard";
+import { AppValidationPipe } from "~common/validator/pipe";
 import { UpdateUserDto } from "~user/dto/updateUser.dto";
 import { IUserRes, TUser } from "~user/type/user.type";
 
@@ -40,7 +40,6 @@ export class UserController {
   @UseGuards(AuthGuard)
   @UsePipes(new AppValidationPipe())
   async updateUser(@Body() body: UpdateUserDto, @User() user: TUser): Promise<IUserRes> {
-    console.log("BODY", body);
     return this.userService.buildUserResponse(user);
   }
 }

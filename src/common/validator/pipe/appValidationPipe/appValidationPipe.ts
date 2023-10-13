@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, ValidationPipe } from "@nestjs/common";
 import { ValidationError } from "class-validator";
-import { AppHttpException } from "src/common/error";
+
+import { AppHttpException } from "~common/error";
 
 @Injectable()
 export class AppValidationPipe extends ValidationPipe {
@@ -28,7 +29,7 @@ export class AppValidationPipe extends ValidationPipe {
 
   private createErrorMessage(path: string, error: ValidationError): string {
     const constraints = Object.values(error.constraints ?? {}).join(", ");
-
+    //если объект вложенный без этой проверки будет вывод: [object object]
     if (typeof error.value !== "string") return `${path} has wrong value: ${constraints}`;
 
     return `${path} has wrong value - ${String(error.value)}: ${constraints}`;
