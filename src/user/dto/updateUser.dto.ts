@@ -3,10 +3,9 @@ import { IsEmail, IsNotEmpty, IsNotEmptyObject, IsString, ValidateNested } from 
 
 import { IsOptional } from "~common/validator/dto";
 
-class UserDto {
+export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
   readonly email: string;
   @IsOptional()
   @IsNotEmpty()
@@ -17,18 +16,16 @@ class UserDto {
   @IsString()
   readonly username: string;
   @IsOptional()
-  @IsNotEmpty()
   @IsString()
   readonly bio: string;
   @IsOptional()
-  @IsNotEmpty()
   @IsString()
   readonly image: string;
 }
 
-export class UpdateUserDto {
-  @Type(() => UserDto)
+export class UpdateUserDtoReqBody {
+  @Type(() => UpdateUserDto)
   @ValidateNested()
   @IsNotEmptyObject()
-  user: UserDto;
+  user: UpdateUserDto;
 }

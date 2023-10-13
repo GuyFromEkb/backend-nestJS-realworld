@@ -3,11 +3,11 @@ import { Body, Controller, Get, Post, Put, UseGuards, UsePipes } from "@nestjs/c
 import { User } from "~common/decorator/userDecorator/user.decorator";
 import { AuthGuard } from "~common/guard";
 import { AppValidationPipe } from "~common/validator/pipe";
-import { UpdateUserDto } from "~user/dto/updateUser.dto";
-import { IUserRes, TUser } from "~user/type/user.type";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
+import { UpdateUserDtoReqBody } from "./dto/updateUser.dto";
+import { IUserRes, TUser } from "./type/user.type";
 import { UserService } from "./user.service";
 
 @Controller()
@@ -25,6 +25,7 @@ export class UserController {
   @Post("/users/login")
   @UsePipes(new AppValidationPipe())
   async loginUser(@Body("user") loginUserDto: LoginUserDto): Promise<IUserRes> {
+    console.log("312", loginUserDto);
     const user = await this.userService.loginUser(loginUserDto);
 
     return this.userService.buildUserResponse(user);
@@ -39,7 +40,9 @@ export class UserController {
   @Put("/user")
   @UseGuards(AuthGuard)
   @UsePipes(new AppValidationPipe())
-  async updateUser(@Body() body: UpdateUserDto, @User() user: TUser): Promise<IUserRes> {
-    return this.userService.buildUserResponse(user);
+  async updateUser(@Body() body: UpdateUserDtoReqBody, @User("id") userId: string): Promise<IUserRes> {
+    const updatedUser = await this.userService.updateUser(body.user, userId);
+
+    return this.userService.buildUserResponse(updatedUser);
   }
 }

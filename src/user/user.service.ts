@@ -8,6 +8,7 @@ import { IUserRes, TUser } from "~user/type/user.type";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
+import { UpdateUserDto } from "./dto/updateUser.dto";
 import { UserEntity } from "./user.entity";
 
 @Injectable()
@@ -48,6 +49,22 @@ export class UserService {
     }
 
     return existUser;
+  }
+
+  async updateUser(updateUserDto: UpdateUserDto, userId: string): Promise<UserEntity> {
+    const user = await db.manager.findOne(UserEntity, {
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new AppHttpException("user not found by Token", HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    Object.assign(user, updateUserDto);
+
+    return await db.manager.save(user);
   }
 
   buildUserResponse(userEntity: UserEntity | TUser): IUserRes {
