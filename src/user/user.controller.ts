@@ -5,7 +5,6 @@ import { User } from "~common/decorator/userDecorator/user.decorator";
 import { AuthGuard } from "~common/guard";
 import { UpdateUserDto } from "~user/dto/updateUser.dto";
 import { IUserRes, TUser } from "~user/type/user.type";
-import { ValidatePayloadExistsPipe } from "~user/validator/updateUser.validator";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
@@ -39,9 +38,9 @@ export class UserController {
 
   @Put("/user")
   @UseGuards(AuthGuard)
-  @UsePipes(new ValidatePayloadExistsPipe())
-  async updateUser(@Body("user") updateUserDto: UpdateUserDto, @User() user: TUser): Promise<IUserRes> {
-    console.log("updateUserDto", updateUserDto);
+  @UsePipes(new AppValidationPipe())
+  async updateUser(@Body() body: UpdateUserDto, @User() user: TUser): Promise<IUserRes> {
+    console.log("BODY", body);
     return this.userService.buildUserResponse(user);
   }
 }
