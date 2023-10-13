@@ -6,4 +6,5 @@
 Backend on nestJs for [RealWorldApp](https://github.com/gothinkster/realworld)  
 Based on [RealWorld API Spec](https://github.com/gothinkster/realworld/tree/main/api)
 
-
+generate migration:
+npm run db:create --name=generate_migranion_name

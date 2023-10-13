@@ -25,7 +25,6 @@ export class UserController {
   @Post("/users/login")
   @UsePipes(new AppValidationPipe())
   async loginUser(@Body("user") loginUserDto: LoginUserDto): Promise<IUserRes> {
-    console.log("312", loginUserDto);
     const user = await this.userService.loginUser(loginUserDto);
 
     return this.userService.buildUserResponse(user);
