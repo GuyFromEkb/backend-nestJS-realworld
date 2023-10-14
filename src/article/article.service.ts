@@ -3,7 +3,6 @@ import slugify from "slugify";
 import uniqueSlug from "unique-slug";
 
 import { db } from "~db";
-import { TUser } from "~user/type/user.type";
 import { UserEntity } from "~user/user.entity";
 
 import { ArticleEntity } from "./article.entity";
@@ -11,7 +10,7 @@ import { CreateArticleDto } from "./dto/createArticle.dto";
 
 @Injectable()
 export class ArticleService {
-  async createArticle(article: CreateArticleDto, currentUser: TUser) {
+  async createArticle(article: CreateArticleDto, currentUser: UserEntity) {
     const newArticle = new ArticleEntity();
 
     Object.assign(newArticle, article);

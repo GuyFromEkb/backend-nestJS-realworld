@@ -29,7 +29,7 @@ export class UserEntity {
   articles: ArticleEntity[];
 
   @BeforeInsert()
-  async hashPassword() {
+  private async hashPassword() {
     this.password = await hash(this.password, USER_PASSWORD_SALT);
   }
 }

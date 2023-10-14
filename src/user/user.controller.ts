@@ -7,7 +7,8 @@ import { AppValidationPipe } from "~common/validator/pipe";
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
 import { UpdateUserDtoReqBody } from "./dto/updateUser.dto";
-import { IUserRes, TUser } from "./type/user.type";
+import { IUserRes } from "./type/user.type";
+import { UserEntity } from "./user.entity";
 import { UserService } from "./user.service";
 
 @Controller()
@@ -32,7 +33,7 @@ export class UserController {
 
   @Get("/user")
   @UseGuards(AuthGuard)
-  async getCurrentUser(@User() user: TUser): Promise<IUserRes> {
+  async getCurrentUser(@User() user: UserEntity): Promise<IUserRes> {
     return this.userService.buildUserResponse(user);
   }
 
