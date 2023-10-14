@@ -1,9 +1,10 @@
 import { BeforeUpdate, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
-import { UserEntity } from "~user/user.entity";
+//Todo при абсолютном пути не работает при работе с orm через package.json
+import { UserEntity } from "../user/user.entity";
 
 @Entity({ name: "articles" })
-export class ArticlesEntity {
+export class ArticleEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
@@ -19,7 +20,7 @@ export class ArticlesEntity {
   @Column()
   body: string;
 
-  @Column({ type: "simple-array" })
+  @Column({ type: "simple-array", default: "" })
   tagList: string[];
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
@@ -27,9 +28,6 @@ export class ArticlesEntity {
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   updatedAt: Date;
-
-  @Column()
-  favorited: boolean;
 
   @Column({ default: 0 })
   favoritesCount: number;
