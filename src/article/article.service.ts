@@ -31,9 +31,24 @@ export class ArticleService {
     });
 
     if (!article)
-      throw new AppHttpException("cant find Article by this slug", HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new AppHttpException("cant find article by the slug", HttpStatus.UNPROCESSABLE_ENTITY);
 
     return article;
+  }
+
+  async deleteArticleBySlug(slug: string, currentUser: UserEntity): Promise<boolean> {
+    const result = await db.manager.delete(ArticleEntity, {
+      slug,
+      author: currentUser,
+    });
+    const hasDeleted = !!result.affected;
+    if (!hasDeleted)
+      throw new AppHttpException(
+        "cant find article by the slug or the current user is not the author of the article",
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+
+    return hasDeleted;
   }
 
   buildArticleResponse(article: ArticleEntity): IArticleResponse {
