@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import slugify from "slugify";
 import uniqueSlug from "unique-slug";
 
+import { AppHttpException } from "~common/error";
 import { db } from "~db";
 import { UserEntity } from "~user/user.entity";
 
@@ -11,7 +12,7 @@ import { IArticleResponse } from "./type/article.type";
 
 @Injectable()
 export class ArticleService {
-  async createArticle(article: CreateArticleDto, currentUser: UserEntity) {
+  async createArticle(article: CreateArticleDto, currentUser: UserEntity): Promise<ArticleEntity> {
     const newArticle = new ArticleEntity();
 
     Object.assign(newArticle, article);
@@ -21,14 +22,18 @@ export class ArticleService {
     return await db.manager.save(ArticleEntity, newArticle);
   }
 
-  private generateUniqSlug(articleTitle: string, articleUuid: string) {
-    const slugFromTitle = slugify(articleTitle, {
-      lower: true,
-      strict: true,
+  async getArticleBySlug(slug: string): Promise<ArticleEntity> {
+    const article = await db.manager.findOne(ArticleEntity, {
+      where: {
+        slug,
+      },
+      relations: ["author"],
     });
-    const uniqHash = uniqueSlug(articleUuid);
 
-    return `${slugFromTitle}-${uniqHash}`;
+    if (!article)
+      throw new AppHttpException("cant find Article by this slug", HttpStatus.UNPROCESSABLE_ENTITY);
+
+    return article;
   }
 
   buildArticleResponse(article: ArticleEntity): IArticleResponse {
@@ -54,5 +59,16 @@ export class ArticleService {
         },
       },
     };
+  }
+
+  private generateUniqSlug(articleTitle: string, articleUuid: string) {
+    const cutArticle = articleTitle.slice(0, 36);
+    const slugFromTitle = slugify(cutArticle, {
+      lower: true,
+      strict: true,
+    });
+    const uniqHash = uniqueSlug(articleUuid);
+
+    return `${slugFromTitle}-${uniqHash}`;
   }
 }
