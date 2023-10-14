@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import slugify from "slugify";
 import uniqueSlug from "unique-slug";
 
+import { UpdateArticleDto } from "~article/dto/updateArticle.dto";
 import { AppHttpException } from "~common/error";
 import { db } from "~db";
 import { UserEntity } from "~user/user.entity";
@@ -22,30 +23,23 @@ export class ArticleService {
     return await db.manager.save(ArticleEntity, newArticle);
   }
 
+  async updateArticleBySlug(
+    slug: string,
+    updateArticleDto: UpdateArticleDto,
+    currentUserId: string,
+  ): Promise<ArticleEntity> {
+    const article = await this.getArticleBySlugAndVerifyAuthor(slug, currentUserId);
+
+    Object.assign(article, updateArticleDto);
+    return await db.manager.save(ArticleEntity, article);
+  }
+
   async getArticleBySlug(slug: string): Promise<ArticleEntity> {
-    const article = await db.manager.findOne(ArticleEntity, {
-      where: {
-        slug,
-      },
-      relations: ["author"],
-    });
-
-    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
-
-    return article;
+    return await this.getArticleBySlugAndVerifyAuthor(slug);
   }
 
   async deleteArticleBySlug(slug: string, currentUserId: string): Promise<void> {
-    const article = await db.manager.findOne(ArticleEntity, {
-      where: {
-        slug,
-      },
-      relations: ["author"],
-    });
-
-    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
-    if (article.author.id !== currentUserId)
-      throw new AppHttpException("You are not an author", HttpStatus.FORBIDDEN);
+    const article = await this.getArticleBySlugAndVerifyAuthor(slug, currentUserId);
 
     await db.manager.remove(article);
   }
@@ -75,6 +69,23 @@ export class ArticleService {
     };
   }
 
+  private async getArticleBySlugAndVerifyAuthor(
+    slug: string,
+    currentUserId?: string,
+  ): Promise<ArticleEntity> {
+    const article = await db.manager.findOne(ArticleEntity, {
+      where: {
+        slug,
+      },
+      relations: ["author"],
+    });
+
+    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
+    if (currentUserId && currentUserId !== article.author.id)
+      throw new AppHttpException("You are not an author", HttpStatus.FORBIDDEN);
+
+    return article;
+  }
   private generateUniqSlug(articleTitle: string, articleUuid: string) {
     const cutArticle = articleTitle.slice(0, 36);
     const slugFromTitle = slugify(cutArticle, {

@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards, UsePipes } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 
+import { UpdateArticleDto } from "~article/dto/updateArticle.dto";
 import { User } from "~common/decorator";
 import { AuthGuard } from "~common/guard";
-import { AppValidationPipe } from "~common/validator/pipe";
+import { AppValidationPipe, ValidatePayloadExistsPipe } from "~common/validator/pipe";
 import { UserEntity } from "~user/user.entity";
 
 import { ArticleService } from "./article.service";
@@ -22,6 +23,24 @@ export class ArticleController {
   ): Promise<IArticleResponse> {
     const newArticle = await this.articleService.createArticle(article, user);
     return this.articleService.buildArticleResponse(newArticle);
+  }
+
+  @Put("/:slug")
+  @UseGuards(AuthGuard)
+  @UsePipes(new AppValidationPipe())
+  @UsePipes(new ValidatePayloadExistsPipe())
+  async updateArticle(
+    @Param("slug") slug: string,
+    @Body("article") updateArticleDto: UpdateArticleDto,
+    @User("id") currentUserId: string,
+  ) {
+    console.log("updateArticleDto", updateArticleDto);
+    const updatedArticle = await this.articleService.updateArticleBySlug(
+      slug,
+      updateArticleDto,
+      currentUserId,
+    );
+    return this.articleService.buildArticleResponse(updatedArticle);
   }
 
   @Get("/:slug")
