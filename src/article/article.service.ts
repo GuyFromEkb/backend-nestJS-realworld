@@ -7,6 +7,7 @@ import { UserEntity } from "~user/user.entity";
 
 import { ArticleEntity } from "./article.entity";
 import { CreateArticleDto } from "./dto/createArticle.dto";
+import { IArticleResponse } from "./type/article.type";
 
 @Injectable()
 export class ArticleService {
@@ -15,7 +16,7 @@ export class ArticleService {
 
     Object.assign(newArticle, article);
     newArticle.slug = this.generateUniqSlug(newArticle.title, newArticle.id);
-    newArticle.author = currentUser as UserEntity;
+    newArticle.author = currentUser;
 
     return await db.manager.save(ArticleEntity, newArticle);
   }
@@ -28,5 +29,30 @@ export class ArticleService {
     const uniqHash = uniqueSlug(articleUuid);
 
     return `${slugFromTitle}-${uniqHash}`;
+  }
+
+  buildArticleResponse(article: ArticleEntity): IArticleResponse {
+    const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body } = article;
+    return {
+      article: {
+        slug,
+        title,
+        description,
+        body,
+        createdAt,
+        updatedAt,
+        tagList,
+        favoritesCount,
+        //TODO убрать хардкод
+        favorited: false,
+        author: {
+          bio: author.bio,
+          image: author.image,
+          username: author.username,
+          //TODO убрать хардкод
+          following: false,
+        },
+      },
+    };
   }
 }
