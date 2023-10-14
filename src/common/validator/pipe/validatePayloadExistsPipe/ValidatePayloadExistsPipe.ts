@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, PipeTransform } from "@nestjs/common";
+import { ArgumentMetadata, HttpStatus, Injectable, PipeTransform } from "@nestjs/common";
 
 import { AppHttpException } from "~common/error";
 
@@ -14,8 +14,12 @@ import { AppHttpException } from "~common/error";
  */
 Injectable();
 export class ValidatePayloadExistsPipe implements PipeTransform {
-  transform(payload: any): any {
-    if (!Object.keys(payload).length) {
+  transform(payload: any, metadata: ArgumentMetadata): any {
+    const isReqBody = metadata.type === "body";
+    if (!isReqBody) return payload;
+
+    const hasSomeValue = Object.values(payload).some(Boolean);
+    if (!hasSomeValue) {
       throw new AppHttpException("Payload should not be empty", HttpStatus.BAD_REQUEST);
     }
 
