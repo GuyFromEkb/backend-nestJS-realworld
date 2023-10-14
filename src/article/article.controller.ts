@@ -32,8 +32,7 @@ export class ArticleController {
 
   @Delete("/:slug")
   @UseGuards(AuthGuard)
-  async deleteArticleBySlug(@Param("slug") slug: string, @User() user: UserEntity): Promise<void> {
-    await this.articleService.deleteArticleBySlug(slug, user);
-    return;
+  async deleteArticleBySlug(@Param("slug") slug: string, @User("id") currentUserId: string): Promise<void> {
+    await this.articleService.deleteArticleBySlug(slug, currentUserId);
   }
 }

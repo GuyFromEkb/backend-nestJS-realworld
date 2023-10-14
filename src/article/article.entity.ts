@@ -32,7 +32,12 @@ export class ArticleEntity {
   @Column({ default: 0 })
   favoritesCount: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.articles)
+  @ManyToOne(
+    () => UserEntity,
+    (user) => user.articles,
+    // С Этой опцией, мы всегда будем получать вместе с сущьностю, ещё связанную сущьность (автора), без надобности указывать relations: ["author"],
+    // { eager: true },
+  )
   author: UserEntity;
 
   // actions

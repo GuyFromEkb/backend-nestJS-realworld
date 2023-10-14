@@ -30,25 +30,24 @@ export class ArticleService {
       relations: ["author"],
     });
 
-    if (!article)
-      throw new AppHttpException("cant find article by the slug", HttpStatus.UNPROCESSABLE_ENTITY);
+    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
 
     return article;
   }
 
-  async deleteArticleBySlug(slug: string, currentUser: UserEntity): Promise<boolean> {
-    const result = await db.manager.delete(ArticleEntity, {
-      slug,
-      author: currentUser,
+  async deleteArticleBySlug(slug: string, currentUserId: string): Promise<void> {
+    const article = await db.manager.findOne(ArticleEntity, {
+      where: {
+        slug,
+      },
+      relations: ["author"],
     });
-    const hasDeleted = !!result.affected;
-    if (!hasDeleted)
-      throw new AppHttpException(
-        "cant find article by the slug or the current user is not the author of the article",
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
 
-    return hasDeleted;
+    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
+    if (article.author.id !== currentUserId)
+      throw new AppHttpException("You are not an author", HttpStatus.FORBIDDEN);
+
+    await db.manager.remove(article);
   }
 
   buildArticleResponse(article: ArticleEntity): IArticleResponse {
