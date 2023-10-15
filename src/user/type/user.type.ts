@@ -1,5 +1,5 @@
 import { UserEntity } from "~user/user.entity";
 
-export interface IUserRes {
-  user: Omit<UserEntity, "id" | "articles" | "password"> & { token: string };
+export interface IUserResponse {
+  user: Pick<UserEntity, "bio" | "image" | "username" | "email"> & { token: string };
 }

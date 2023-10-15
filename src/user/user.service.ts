@@ -4,7 +4,7 @@ import { AppHttpException } from "src/common/error";
 
 import { TokenService } from "~common/service";
 import { db } from "~db";
-import { IUserRes } from "~user/type/user.type";
+import { IUserResponse } from "~user/type/user.type";
 
 import { CreateUserDto } from "./dto/createUser.dto";
 import { LoginUserDto } from "./dto/loginUser.dto";
@@ -67,7 +67,7 @@ export class UserService {
     return await db.manager.save(user);
   }
 
-  buildUserResponse(userEntity: UserEntity): IUserRes {
+  buildUserResponse(userEntity: UserEntity): IUserResponse {
     return {
       user: {
         bio: userEntity.bio,
