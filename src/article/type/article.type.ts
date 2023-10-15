@@ -4,7 +4,7 @@ interface IArticleAuthor {
   image: string;
   following: boolean;
 }
-interface IArticle {
+export interface IArticleResponse {
   slug: string;
   title: string;
   description: string;
@@ -14,7 +14,12 @@ interface IArticle {
   updatedAt: Date;
   favorited: boolean;
   favoritesCount: number;
+  author: IArticleAuthor;
 }
-export interface IArticleResponse {
-  article: IArticle & { author: IArticleAuthor };
+export interface ISingleArticleResponse {
+  article: IArticleResponse;
+}
+export interface IManyArticleResponse {
+  articles: IArticleResponse[];
+  articlesCount: number;
 }

@@ -2,17 +2,43 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import slugify from "slugify";
 import uniqueSlug from "unique-slug";
 
-import { UpdateArticleDto } from "~article/dto/updateArticle.dto";
 import { AppHttpException } from "~common/error";
 import { db } from "~db";
 import { UserEntity } from "~user/user.entity";
 
 import { ArticleEntity } from "./article.entity";
 import { CreateArticleDto } from "./dto/createArticle.dto";
+import { GetAllArticleByQueryDto } from "./dto/getAllArticleByQuery.dto";
+import { UpdateArticleDto } from "./dto/updateArticle.dto";
 import { IArticleResponse } from "./type/article.type";
 
 @Injectable()
 export class ArticleService {
+  async getAllByQuery(
+    query: GetAllArticleByQueryDto,
+    userId: string | null,
+  ): Promise<{ articles: ArticleEntity[]; articlesCount: number }> {
+    const queryBuilder = db
+      .getRepository(ArticleEntity)
+      .createQueryBuilder("articles")
+      .leftJoinAndSelect("articles.author", "author")
+      .offset(query.offset)
+      .limit(query.limit)
+      .orderBy("articles.createdAt", "DESC");
+
+    if (query.tag) {
+      queryBuilder.andWhere("articles.tagList LIKE :tags", { tags: "%" + query.tag + "%" });
+    }
+    if (query.author) {
+      const user = await db.manager.findOneBy(UserEntity, { username: query.author });
+      queryBuilder.andWhere("articles.authorId = :id", { id: user?.id });
+    }
+
+    const [articles, articlesCount] = await queryBuilder.getManyAndCount();
+
+    return { articles, articlesCount };
+  }
+
   async createArticle(article: CreateArticleDto, currentUser: UserEntity): Promise<ArticleEntity> {
     const newArticle = new ArticleEntity();
 
@@ -47,24 +73,22 @@ export class ArticleService {
   buildArticleResponse(article: ArticleEntity): IArticleResponse {
     const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body } = article;
     return {
-      article: {
-        slug,
-        title,
-        description,
-        body,
-        createdAt,
-        updatedAt,
-        tagList,
-        favoritesCount,
+      slug,
+      title,
+      description,
+      body,
+      createdAt,
+      updatedAt,
+      tagList,
+      favoritesCount,
+      //TODO убрать хардкод
+      favorited: false,
+      author: {
+        bio: author.bio,
+        image: author.image,
+        username: author.username,
         //TODO убрать хардкод
-        favorited: false,
-        author: {
-          bio: author.bio,
-          image: author.image,
-          username: author.username,
-          //TODO убрать хардкод
-          following: false,
-        },
+        following: false,
       },
     };
   }
