@@ -27,7 +27,9 @@ export class ArticleService {
       .orderBy("articles.createdAt", "DESC");
 
     if (query.tag) {
-      queryBuilder.andWhere("articles.tagList LIKE :tags", { tags: "%" + query.tag + "%" });
+      // Select where string is in simple-array
+      // queryBuilder.andWhere("articles.tagList LIKE :tags", { tags: "%" + query.tag + "%" });
+      queryBuilder.andWhere("articles.tagList IN (:...tags)", { tags: query.tag });
     }
 
     if (query.author) {
