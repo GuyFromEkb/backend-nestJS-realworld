@@ -39,17 +39,12 @@ export class ArticleController {
       }),
     )
     query: GetAllArticleByQueryDto,
-    @User("id") userId: string | null,
+    @User("id") currentUserId: string | null,
   ): Promise<IManyArticleResponse> {
-    const { articles, articlesCount } = await this.articleService.getAllByQuery(query, userId);
+    const { articles, articlesCount } = await this.articleService.getAllByQuery(query, currentUserId);
+
     return {
-      articles: articles.map((article) =>
-        this.articleService.buildArticleResponse({
-          article,
-          isFavoritedArticle: false,
-          isFollowingAuthor: false,
-        }),
-      ),
+      articles,
       articlesCount,
     };
   }
@@ -81,7 +76,6 @@ export class ArticleController {
     @Body("article") updateArticleDto: UpdateArticleDto,
     @User() currentUser: UserEntity,
   ): Promise<ISingleArticleResponse> {
-    console.log("updateArticleDto", updateArticleDto);
     const article = await this.articleService.updateArticleBySlug(slug, updateArticleDto, currentUser.id);
     const isFavorited = await this.articleService.articleHasFavorited(article, currentUser);
     return {

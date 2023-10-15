@@ -16,8 +16,8 @@ import { IArticleResponse } from "./type/article.type";
 export class ArticleService {
   async getAllByQuery(
     query: GetAllArticleByQueryDto,
-    userId: string | null,
-  ): Promise<{ articles: ArticleEntity[]; articlesCount: number }> {
+    currentUserId: string | null,
+  ): Promise<{ articles: IArticleResponse[]; articlesCount: number }> {
     const queryBuilder = db
       .getRepository(ArticleEntity)
       .createQueryBuilder("articles")
@@ -29,12 +29,61 @@ export class ArticleService {
     if (query.tag) {
       queryBuilder.andWhere("articles.tagList LIKE :tags", { tags: "%" + query.tag + "%" });
     }
+
     if (query.author) {
       const user = await db.manager.findOneBy(UserEntity, { username: query.author });
       queryBuilder.andWhere("articles.authorId = :id", { id: user?.id });
     }
+    //Тут поле назвали по уебански, если шо query.favorited === Имя пользователя.Статьи которые данный пользователь лайкнул
+    if (query.favorited) {
+      const userWithFavorited = await db.manager.findOne(UserEntity, {
+        where: {
+          username: query.favorited,
+        },
+        relations: ["favorites"],
+      });
 
-    const [articles, articlesCount] = await queryBuilder.getManyAndCount();
+      if (userWithFavorited && userWithFavorited.favorites.length) {
+        const favoriteIds = userWithFavorited!.favorites.map(
+          (userFavoritedArticle) => userFavoritedArticle.id,
+        );
+
+        queryBuilder.andWhere("articles.id IN (:...favoriteIds)", {
+          favoriteIds,
+        });
+      } else {
+        //самый простой и быстрый способ выйти из queryBuilder (С)Oleksandr
+        queryBuilder.andWhere("1=0");
+      }
+    }
+
+    const currentUserWithFavoritesPromise = currentUserId
+      ? db.manager.findOne(UserEntity, {
+          where: {
+            id: currentUserId,
+          },
+          relations: ["favorites"],
+        })
+      : null;
+    const articlesAndCountPromise = queryBuilder.getManyAndCount();
+
+    const [currentUserWithFavorites, articlesAndCount] = await Promise.all([
+      currentUserWithFavoritesPromise,
+      articlesAndCountPromise,
+    ]);
+    const [articlesFromDb, articlesCount] = articlesAndCount;
+
+    const articles: IArticleResponse[] = articlesFromDb.map((article) => ({
+      ...article,
+      favorited: !!currentUserWithFavorites?.favorites.some(
+        (userFavoriteArticle) => userFavoriteArticle.id === article.id,
+      ),
+      author: {
+        ...article.author,
+        //Todo убрать хардкод
+        following: false,
+      },
+    }));
 
     return { articles, articlesCount };
   }
