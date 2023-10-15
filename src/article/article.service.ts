@@ -70,29 +70,52 @@ export class ArticleService {
     await db.manager.remove(article);
   }
 
-  async favoriteArticle(slug: string, currentUserId: string): Promise<ArticleEntity> {
-    const article = await this.getArticleBySlugAndVerifyAuthor(slug);
-    const user = (await db.manager.findOne(UserEntity, {
-      where: {
-        id: currentUserId,
-      },
-      relations: ["favorites"],
-    }))!;
+  async favoriteArticle(
+    slug: string,
+    currentUserId: string,
+  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
+    const { article, user } = await this.getArticleBySlugAndCurrentUserWithFavorites(slug, currentUserId);
 
-    const isAlreadyInFavorite = !!user.favorites.find((userArticle) => userArticle.id === article.id);
+    const favoriteInUserIdx = user.favorites.findIndex((userArticle) => userArticle.id === article.id);
+    const userAlreadyHasFavoriteInThisArticle = favoriteInUserIdx !== -1;
 
-    if (isAlreadyInFavorite) {
-      return article;
+    if (userAlreadyHasFavoriteInThisArticle) {
+      return { article, user };
     }
 
     article.favoritesCount++;
     user.favorites.push(article);
-    const [, updatedArticle] = await db.manager.save([user, article]);
+    const [updatedUser, updatedArticle] = await db.manager.save([user, article]);
 
-    return updatedArticle as ArticleEntity;
+    return { article: updatedArticle as ArticleEntity, user: updatedUser as UserEntity };
   }
 
-  buildArticleResponse(article: ArticleEntity): IArticleResponse {
+  async unFavoriteArticle(
+    slug: string,
+    currentUserId: string,
+  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
+    const { article, user } = await this.getArticleBySlugAndCurrentUserWithFavorites(slug, currentUserId);
+
+    const favoriteInUserIdx = user.favorites.findIndex((userArticle) => userArticle.id === article.id);
+    const userHasNotThisArticleInFavorite = favoriteInUserIdx === -1;
+
+    if (userHasNotThisArticleInFavorite) {
+      return { article, user };
+    }
+
+    article.favoritesCount--;
+    user.favorites.splice(favoriteInUserIdx, 1);
+
+    const [updatedUser, updatedArticle] = await db.manager.save([user, article]);
+    return { article: updatedArticle as ArticleEntity, user: updatedUser as UserEntity };
+  }
+
+  buildArticleResponse(options: {
+    article: ArticleEntity;
+    isFavoritedArticle: boolean;
+    isFollowingAuthor: boolean;
+  }): IArticleResponse {
+    const { article, isFavoritedArticle, isFollowingAuthor } = options;
     const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body } = article;
     return {
       slug,
@@ -103,18 +126,46 @@ export class ArticleService {
       updatedAt,
       tagList,
       favoritesCount,
-      //TODO убрать хардкод
-      favorited: false,
+      favorited: isFavoritedArticle,
       author: {
         bio: author.bio,
         image: author.image,
         username: author.username,
         //TODO убрать хардкод
-        following: false,
+        following: isFollowingAuthor,
       },
     };
   }
 
+  async articleHasFavorited(article: ArticleEntity, currentUser: UserEntity) {
+    if (currentUser.favorites) {
+      return currentUser.favorites.some((userArticleFavorites) => userArticleFavorites.id === article.id);
+    }
+
+    const userWithFavorites = (await db.manager.findOne(UserEntity, {
+      where: {
+        id: currentUser.id,
+      },
+      relations: ["favorites"],
+    }))!;
+
+    return userWithFavorites.favorites.some((userArticleFavorites) => userArticleFavorites.id === article.id);
+  }
+
+  private async getArticleBySlugAndCurrentUserWithFavorites(
+    slug: string,
+    currentUserId: string,
+  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
+    const article = await this.getArticleBySlugAndVerifyAuthor(slug);
+    const user = (await db.manager.findOne(UserEntity, {
+      where: {
+        id: currentUserId,
+      },
+      relations: ["favorites"],
+    }))!;
+
+    return { article, user };
+  }
   private async getArticleBySlugAndVerifyAuthor(
     slug: string,
     currentUserId?: string,

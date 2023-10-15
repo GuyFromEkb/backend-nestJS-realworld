@@ -43,7 +43,13 @@ export class ArticleController {
   ): Promise<IManyArticleResponse> {
     const { articles, articlesCount } = await this.articleService.getAllByQuery(query, userId);
     return {
-      articles: articles.map((article) => this.articleService.buildArticleResponse(article)),
+      articles: articles.map((article) =>
+        this.articleService.buildArticleResponse({
+          article,
+          isFavoritedArticle: false,
+          isFollowingAuthor: false,
+        }),
+      ),
       articlesCount,
     };
   }
@@ -52,12 +58,18 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @UsePipes(new AppValidationPipe())
   async createArticle(
-    @Body("article") article: CreateArticleDto,
+    @Body("article") createArticleDto: CreateArticleDto,
     @User() user: UserEntity,
   ): Promise<ISingleArticleResponse> {
-    const newArticle = await this.articleService.createArticle(article, user);
+    const article = await this.articleService.createArticle(createArticleDto, user);
 
-    return { article: this.articleService.buildArticleResponse(newArticle) };
+    return {
+      article: this.articleService.buildArticleResponse({
+        article,
+        isFavoritedArticle: false,
+        isFollowingAuthor: false,
+      }),
+    };
   }
 
   @Put("/:slug")
@@ -67,21 +79,43 @@ export class ArticleController {
   async updateArticle(
     @Param("slug") slug: string,
     @Body("article") updateArticleDto: UpdateArticleDto,
-    @User("id") currentUserId: string,
+    @User() currentUser: UserEntity,
   ): Promise<ISingleArticleResponse> {
     console.log("updateArticleDto", updateArticleDto);
-    const updatedArticle = await this.articleService.updateArticleBySlug(
-      slug,
-      updateArticleDto,
-      currentUserId,
-    );
-    return { article: this.articleService.buildArticleResponse(updatedArticle) };
+    const article = await this.articleService.updateArticleBySlug(slug, updateArticleDto, currentUser.id);
+    const isFavorited = await this.articleService.articleHasFavorited(article, currentUser);
+    return {
+      article: this.articleService.buildArticleResponse({
+        article,
+        isFavoritedArticle: isFavorited,
+        isFollowingAuthor: false,
+      }),
+    };
   }
 
   @Get("/:slug")
-  async getArticleBySlug(@Param("slug") slug: string): Promise<ISingleArticleResponse> {
+  async getArticleBySlug(
+    @Param("slug") slug: string,
+    @User() currentUser?: UserEntity,
+  ): Promise<ISingleArticleResponse> {
     const article = await this.articleService.getArticleBySlug(slug);
-    return { article: this.articleService.buildArticleResponse(article) };
+    if (!currentUser)
+      return {
+        article: this.articleService.buildArticleResponse({
+          article,
+          isFavoritedArticle: false,
+          isFollowingAuthor: false,
+        }),
+      };
+
+    const isFavorited = await this.articleService.articleHasFavorited(article, currentUser);
+    return {
+      article: this.articleService.buildArticleResponse({
+        article,
+        isFavoritedArticle: isFavorited,
+        isFollowingAuthor: false,
+      }),
+    };
   }
 
   @Delete("/:slug")
@@ -93,9 +127,35 @@ export class ArticleController {
   @Post("/:slug/favorite")
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
-  async favoriteArticle(@Param("slug") slug: string, @User("id") currentUserId: string): Promise<any> {
-    const article = await this.articleService.favoriteArticle(slug, currentUserId);
+  async favoriteArticle(
+    @Param("slug") slug: string,
+    @User("id") currentUserId: string,
+  ): Promise<ISingleArticleResponse> {
+    const { article, user } = await this.articleService.favoriteArticle(slug, currentUserId);
+    const isFavorited = await this.articleService.articleHasFavorited(article, user);
+    return {
+      article: this.articleService.buildArticleResponse({
+        article,
+        isFavoritedArticle: isFavorited,
+        isFollowingAuthor: false,
+      }),
+    };
+  }
 
-    return this.articleService.buildArticleResponse(article);
+  @Delete("/:slug/favorite")
+  @UseGuards(AuthGuard)
+  async unFavoriteArticle(
+    @Param("slug") slug: string,
+    @User("id") currentUserId: string,
+  ): Promise<ISingleArticleResponse> {
+    const { article, user } = await this.articleService.unFavoriteArticle(slug, currentUserId);
+    const isFavorited = await this.articleService.articleHasFavorited(article, user);
+    return {
+      article: this.articleService.buildArticleResponse({
+        article,
+        isFavoritedArticle: isFavorited,
+        isFollowingAuthor: false,
+      }),
+    };
   }
 }
