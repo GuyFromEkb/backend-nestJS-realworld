@@ -18,13 +18,15 @@ export class AuthMiddleware implements NestMiddleware {
       return;
     }
 
-    try {
-      const decodeToken = this.tokenService.decodeToken(token);
-      req.user = await db.manager.findOne(UserEntity, { where: { id: decodeToken?.id } });
-    } catch (err) {
+    const decodeTokenPayload = this.tokenService.decodeToken(token);
+
+    if (!decodeTokenPayload) {
       req.user = null;
-    } finally {
       next();
+      return;
     }
+
+    req.user = await db.manager.findOne(UserEntity, { where: { id: decodeTokenPayload.id } });
+    next();
   }
 }

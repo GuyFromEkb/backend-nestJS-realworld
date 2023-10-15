@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { decode, sign } from "jsonwebtoken";
+import { decode, sign, verify } from "jsonwebtoken";
 
 import { JWT_ACCESS_SECRET } from "~env";
 
@@ -13,6 +13,11 @@ export class TokenService {
   }
 
   decodeToken(token: string): TDecodeToken | null {
-    return decode(token, { json: true });
+    try {
+      const tokenPayload = verify(token, JWT_ACCESS_SECRET);
+      return tokenPayload as TDecodeToken;
+    } catch {
+      return null;
+    }
   }
 }
