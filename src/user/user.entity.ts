@@ -4,7 +4,7 @@ import {
   Column,
   Entity,
   JoinTable,
-  ManyToOne,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
@@ -36,7 +36,7 @@ export class UserEntity {
   @OneToMany(() => ArticleEntity, (article) => article.author)
   articles: ArticleEntity[];
 
-  @ManyToOne(() => ArticleEntity)
+  @ManyToMany(() => ArticleEntity)
   @JoinTable()
   favorites: ArticleEntity[];
 
