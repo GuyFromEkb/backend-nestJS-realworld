@@ -23,7 +23,8 @@
     "db:drop": "npm run typeorm schema:drop",
     "db:create": "npm run typeorm:no-config -- migration:create src/db/migrations/%npm_config_name%",
     "db:generate": "npm run typeorm -- migration:generate src/db/migrations/%npm_config_name%",
-    "db:migrate": "npm run typeorm migration:run"
+    "db:migrate": "npm run typeorm migration:run",
+    "db:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",

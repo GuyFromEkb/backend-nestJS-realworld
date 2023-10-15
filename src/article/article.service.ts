@@ -70,6 +70,28 @@ export class ArticleService {
     await db.manager.remove(article);
   }
 
+  async favoriteArticle(slug: string, currentUserId: string): Promise<ArticleEntity> {
+    const article = await this.getArticleBySlugAndVerifyAuthor(slug);
+    const user = (await db.manager.findOne(UserEntity, {
+      where: {
+        id: currentUserId,
+      },
+      relations: ["favorites"],
+    }))!;
+
+    const isAlreadyInFavorite = !!user.favorites.find((userArticle) => userArticle.id === article.id);
+
+    if (isAlreadyInFavorite) {
+      return article;
+    }
+
+    article.favoritesCount++;
+    user.favorites.push(article);
+    const [, updatedArticle] = await db.manager.save([user, article]);
+
+    return updatedArticle as ArticleEntity;
+  }
+
   buildArticleResponse(article: ArticleEntity): IArticleResponse {
     const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body } = article;
     return {
