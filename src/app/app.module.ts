@@ -1,7 +1,8 @@
 import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
 
+import { ArticleController } from "~article/article.controller";
 import { ArticleModule } from "~article/article.module";
-import { AuthMiddleware } from "~common/middleware";
+import { createAuthMiddleware } from "~common/middleware";
 import { TagModule } from "~tag/tag.module";
 import { UserModule } from "~user/user.module";
 
@@ -15,9 +16,11 @@ import { AppService } from "./app.service";
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).exclude("tags", "users/(.*)").forRoutes({
+    consumer.apply(createAuthMiddleware()).exclude("tags", "users/(.*)", "articles").forRoutes({
       path: "*",
       method: RequestMethod.ALL,
     });
+
+    consumer.apply(createAuthMiddleware(["favorites"])).forRoutes(ArticleController);
   }
 }
