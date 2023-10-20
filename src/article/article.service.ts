@@ -16,8 +16,7 @@ import { IArticleResponse } from "./type/article.type";
 export class ArticleService {
   async getAllByQuery(
     query: GetAllArticleByQueryDto,
-    currentUserId: string | null,
-  ): Promise<{ articles: IArticleResponse[]; articlesCount: number }> {
+  ): Promise<{ articles: ArticleEntity[]; articlesCount: number }> {
     const queryBuilder = db
       .getRepository(ArticleEntity)
       .createQueryBuilder("articles")
@@ -59,33 +58,7 @@ export class ArticleService {
       }
     }
 
-    const currentUserWithFavoritesPromise = currentUserId
-      ? db.manager.findOne(UserEntity, {
-          where: {
-            id: currentUserId,
-          },
-          relations: ["favorites"],
-        })
-      : null;
-    const articlesAndCountPromise = queryBuilder.getManyAndCount();
-
-    const [currentUserWithFavorites, articlesAndCount] = await Promise.all([
-      currentUserWithFavoritesPromise,
-      articlesAndCountPromise,
-    ]);
-    const [articlesFromDb, articlesCount] = articlesAndCount;
-
-    const articles: IArticleResponse[] = articlesFromDb.map((article) => ({
-      ...article,
-      favorited: !!currentUserWithFavorites?.favorites.some(
-        (userFavoriteArticle) => userFavoriteArticle.id === article.id,
-      ),
-      author: {
-        ...article.author,
-        //Todo убрать хардкод
-        following: false,
-      },
-    }));
+    const [articles, articlesCount] = await queryBuilder.getManyAndCount();
 
     return { articles, articlesCount };
   }
@@ -123,51 +96,51 @@ export class ArticleService {
 
   async favoriteArticle(
     slug: string,
-    currentUserId: string,
-  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
-    const { article, user } = await this.getArticleBySlugAndCurrentUserWithFavorites(slug, currentUserId);
+    currentUser: UserEntity,
+  ): Promise<{ article: ArticleEntity; currentUser: UserEntity }> {
+    const article = await db.manager.findOneBy(ArticleEntity, { slug });
 
-    const favoriteInUserIdx = user.favorites.findIndex((userArticle) => userArticle.id === article.id);
+    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
+
+    const favoriteInUserIdx = currentUser.favorites.findIndex((userArticle) => userArticle.id === article.id);
     const userAlreadyHasFavoriteInThisArticle = favoriteInUserIdx !== -1;
 
     if (userAlreadyHasFavoriteInThisArticle) {
-      return { article, user };
+      return { article, currentUser };
     }
 
     article.favoritesCount++;
-    user.favorites.push(article);
-    const [updatedUser, updatedArticle] = await db.manager.save([user, article]);
+    currentUser.favorites.push(article);
+    const [updatedUser, updatedArticle] = await db.manager.save([currentUser, article]);
 
-    return { article: updatedArticle as ArticleEntity, user: updatedUser as UserEntity };
+    return { article: updatedArticle as ArticleEntity, currentUser: updatedUser as UserEntity };
   }
 
   async unFavoriteArticle(
     slug: string,
-    currentUserId: string,
-  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
-    const { article, user } = await this.getArticleBySlugAndCurrentUserWithFavorites(slug, currentUserId);
+    currentUser: UserEntity,
+  ): Promise<{ article: ArticleEntity; currentUser: UserEntity }> {
+    const article = await db.manager.findOneBy(ArticleEntity, { slug });
+    if (!article) throw new AppHttpException("cant find article by the slug", HttpStatus.NOT_FOUND);
 
-    const favoriteInUserIdx = user.favorites.findIndex((userArticle) => userArticle.id === article.id);
+    const favoriteInUserIdx = currentUser.favorites.findIndex((userArticle) => userArticle.id === article.id);
     const userHasNotThisArticleInFavorite = favoriteInUserIdx === -1;
 
     if (userHasNotThisArticleInFavorite) {
-      return { article, user };
+      return { article, currentUser };
     }
 
     article.favoritesCount--;
-    user.favorites.splice(favoriteInUserIdx, 1);
+    currentUser.favorites.splice(favoriteInUserIdx, 1);
 
-    const [updatedUser, updatedArticle] = await db.manager.save([user, article]);
-    return { article: updatedArticle as ArticleEntity, user: updatedUser as UserEntity };
+    const [updatedUser, updatedArticle] = await db.manager.save([currentUser, article]);
+    return { article: updatedArticle as ArticleEntity, currentUser: updatedUser as UserEntity };
   }
 
-  buildArticleResponse(options: {
-    article: ArticleEntity;
-    isFavoritedArticle: boolean;
-    isFollowingAuthor: boolean;
-  }): IArticleResponse {
-    const { article, isFavoritedArticle, isFollowingAuthor } = options;
-    const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body } = article;
+  buildArticleResponse(article: ArticleEntity, currentUser?: UserEntity | null): IArticleResponse {
+    const { author, slug, title, tagList, favoritesCount, createdAt, updatedAt, description, body, id } =
+      article;
+    const favorited = !!currentUser?.favorites.some((userArticleFavorite) => userArticleFavorite.id === id);
     return {
       slug,
       title,
@@ -177,46 +150,17 @@ export class ArticleService {
       updatedAt,
       tagList,
       favoritesCount,
-      favorited: isFavoritedArticle,
+      favorited,
       author: {
         bio: author.bio,
         image: author.image,
         username: author.username,
         //TODO убрать хардкод
-        following: isFollowingAuthor,
+        following: false,
       },
     };
   }
 
-  async articleHasFavorited(article: ArticleEntity, currentUser: UserEntity) {
-    if (currentUser.favorites) {
-      return currentUser.favorites.some((userArticleFavorites) => userArticleFavorites.id === article.id);
-    }
-
-    const userWithFavorites = (await db.manager.findOne(UserEntity, {
-      where: {
-        id: currentUser.id,
-      },
-      relations: ["favorites"],
-    }))!;
-
-    return userWithFavorites.favorites.some((userArticleFavorites) => userArticleFavorites.id === article.id);
-  }
-
-  private async getArticleBySlugAndCurrentUserWithFavorites(
-    slug: string,
-    currentUserId: string,
-  ): Promise<{ article: ArticleEntity; user: UserEntity }> {
-    const article = await this.getArticleBySlugAndVerifyAuthor(slug);
-    const user = (await db.manager.findOne(UserEntity, {
-      where: {
-        id: currentUserId,
-      },
-      relations: ["favorites"],
-    }))!;
-
-    return { article, user };
-  }
   private async getArticleBySlugAndVerifyAuthor(
     slug: string,
     currentUserId?: string,

@@ -22,7 +22,7 @@ import { ArticleService } from "./article.service";
 import { CreateArticleDto } from "./dto/createArticle.dto";
 import { GetAllArticleByQueryDto } from "./dto/getAllArticleByQuery.dto";
 import { UpdateArticleDto } from "./dto/updateArticle.dto";
-import { IManyArticleResponse, ISingleArticleResponse } from "./type/article.type";
+import { IArticleResponse, IManyArticleResponse, ISingleArticleResponse } from "./type/article.type";
 
 @Controller("/articles")
 export class ArticleController {
@@ -39,12 +39,16 @@ export class ArticleController {
       }),
     )
     query: GetAllArticleByQueryDto,
-    @User("id") currentUserId: string | null,
+    @User() user: UserEntity | null,
   ): Promise<IManyArticleResponse> {
-    const { articles, articlesCount } = await this.articleService.getAllByQuery(query, currentUserId);
+    const { articles, articlesCount } = await this.articleService.getAllByQuery(query);
+
+    const articlesRes: IArticleResponse[] = articles.map((articleEntity) =>
+      this.articleService.buildArticleResponse(articleEntity, user),
+    );
 
     return {
-      articles,
+      articles: articlesRes,
       articlesCount,
     };
   }
@@ -59,11 +63,7 @@ export class ArticleController {
     const article = await this.articleService.createArticle(createArticleDto, user);
 
     return {
-      article: this.articleService.buildArticleResponse({
-        article,
-        isFavoritedArticle: false,
-        isFollowingAuthor: false,
-      }),
+      article: this.articleService.buildArticleResponse(article),
     };
   }
 
@@ -77,38 +77,21 @@ export class ArticleController {
     @User() currentUser: UserEntity,
   ): Promise<ISingleArticleResponse> {
     const article = await this.articleService.updateArticleBySlug(slug, updateArticleDto, currentUser.id);
-    const isFavorited = await this.articleService.articleHasFavorited(article, currentUser);
+
     return {
-      article: this.articleService.buildArticleResponse({
-        article,
-        isFavoritedArticle: isFavorited,
-        isFollowingAuthor: false,
-      }),
+      article: this.articleService.buildArticleResponse(article, currentUser),
     };
   }
 
   @Get("/:slug")
   async getArticleBySlug(
     @Param("slug") slug: string,
-    @User() currentUser?: UserEntity,
+    @User() currentUser: UserEntity | null,
   ): Promise<ISingleArticleResponse> {
     const article = await this.articleService.getArticleBySlug(slug);
-    if (!currentUser)
-      return {
-        article: this.articleService.buildArticleResponse({
-          article,
-          isFavoritedArticle: false,
-          isFollowingAuthor: false,
-        }),
-      };
 
-    const isFavorited = await this.articleService.articleHasFavorited(article, currentUser);
     return {
-      article: this.articleService.buildArticleResponse({
-        article,
-        isFavoritedArticle: isFavorited,
-        isFollowingAuthor: false,
-      }),
+      article: this.articleService.buildArticleResponse(article, currentUser),
     };
   }
 
@@ -123,16 +106,15 @@ export class ArticleController {
   @HttpCode(HttpStatus.OK)
   async favoriteArticle(
     @Param("slug") slug: string,
-    @User("id") currentUserId: string,
+    @User() currentUser: UserEntity,
   ): Promise<ISingleArticleResponse> {
-    const { article, user } = await this.articleService.favoriteArticle(slug, currentUserId);
-    const isFavorited = await this.articleService.articleHasFavorited(article, user);
+    const { article, currentUser: updatedUserFavorite } = await this.articleService.favoriteArticle(
+      slug,
+      currentUser,
+    );
+
     return {
-      article: this.articleService.buildArticleResponse({
-        article,
-        isFavoritedArticle: isFavorited,
-        isFollowingAuthor: false,
-      }),
+      article: this.articleService.buildArticleResponse(article, updatedUserFavorite),
     };
   }
 
@@ -140,16 +122,15 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   async unFavoriteArticle(
     @Param("slug") slug: string,
-    @User("id") currentUserId: string,
+    @User() currentUser: UserEntity,
   ): Promise<ISingleArticleResponse> {
-    const { article, user } = await this.articleService.unFavoriteArticle(slug, currentUserId);
-    const isFavorited = await this.articleService.articleHasFavorited(article, user);
+    const { article, currentUser: updatedUserFavorite } = await this.articleService.unFavoriteArticle(
+      slug,
+      currentUser,
+    );
+
     return {
-      article: this.articleService.buildArticleResponse({
-        article,
-        isFavoritedArticle: isFavorited,
-        isFollowingAuthor: false,
-      }),
+      article: this.articleService.buildArticleResponse(article, updatedUserFavorite),
     };
   }
 }

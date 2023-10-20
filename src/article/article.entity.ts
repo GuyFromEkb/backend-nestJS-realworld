@@ -36,7 +36,7 @@ export class ArticleEntity {
     () => UserEntity,
     (user) => user.articles,
     // С Этой опцией, мы всегда будем получать вместе с сущьностю, ещё связанную сущьность (автора), без надобности указывать relations: ["author"],
-    // { eager: true },
+    { eager: true },
   )
   author: UserEntity;
 
